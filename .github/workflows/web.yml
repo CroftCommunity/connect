@@ -40,11 +40,10 @@ jobs:
 
   deploy:
     needs: test
-    # Deploy only from the mainline or the designated build/deploy branch, never
-    # from PRs. (Merging to main is the steady-state trigger.)
-    if: >-
-      github.event_name != 'pull_request' &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/build-deploy-11ds5v')
+    # Deploy only from main. The github-pages environment's branch policy only
+    # permits the default branch, so a feature branch cannot publish; merging to
+    # main is the trigger. (Tests above still run on every branch and PR.)
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       pages: write
