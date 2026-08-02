@@ -1,0 +1,16 @@
+# Node / web
+node_modules/
+npm-debug.log*
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+.gradle/
+*.iml
+.idea/
+
+# OS
+.DS_Store
