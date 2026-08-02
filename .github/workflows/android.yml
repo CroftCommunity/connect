@@ -12,6 +12,13 @@ on:
       - 'android/**'
       - '.github/workflows/android.yml'
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: >-
+          Create/attach a GitHub Release at this tag (e.g. v0.1.0) with the
+          debug APK. Leave blank to just build and upload the artifact.
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -45,9 +52,14 @@ jobs:
           if-no-files-found: error
 
   release:
-    # On a version tag, attach the debug APK to a GitHub Release.
+    # Attach the debug APK to a GitHub Release, either on a pushed version tag
+    # or via workflow_dispatch with a release_tag input (the action creates the
+    # tag from the checked-out commit when it doesn't exist yet). Tag-ref pushes
+    # are blocked for this session, so dispatch is how v0.1.0 was cut.
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -62,4 +74,7 @@ jobs:
       - run: ./gradlew assembleDebug --stacktrace
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          name: Croft Connect ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          generate_release_notes: true
           files: android/app/build/outputs/apk/debug/app-debug.apk
