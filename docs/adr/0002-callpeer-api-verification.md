@@ -28,20 +28,26 @@ Fetched 2026-08-02:
 | dial a peer         | `ep.connect(EndpointId.fromString(id), ALPN)` | `EndpointId.fromString(id)` → `EndpointAddr(id, null, emptyList())` → `ep.connect(addr, ALPN)` |
 | bi-stream (in/out)  | `conn.acceptBi()` / `conn.openBi()` returning a sendable stream | same calls, but they return a `BiStream` split via `bi.send()` / `bi.recv()` |
 | write to stream     | `stream.send(bytes)`                | `bi.send().writeAll(bytes)`                                          |
-| read from stream    | `stream.recvExact(2u)` (UInt)       | `bi.recv().readExact(2uL)` (`readExact(size: ULong) -> ByteArray`)   |
+| read from stream    | `stream.recvExact(2u)`              | `bi.recv().readExact(2u)` (`readExact(size: UInt) -> ByteArray`)      |
 | remote id           | `conn.remoteId()`                   | `conn.remoteId()` (already correct)                                  |
 
 `remoteId()` and the bind/identity/lifecycle calls were already correct and are
 unchanged.
 
-## Residual uncertainty
+## Residual uncertainty — resolved by CI
 
-`readExact`'s argument is passed as `ULong` here, matching uniffi's u64 size
-convention and the reference app's usage. This is the one name/type that the
-Dokka class page could not be opened to confirm character-for-character; the CI
-compile in `android.yml` is the backstop. If it rejects `ULong`, the only change
-is the literal suffix (`2u` vs `2uL`) and the `.toULong()`/`.toUInt()` on
-`frameLength`, isolated to `CallPeer.readHello`.
+`readExact`'s size argument was first written as `ULong` (uniffi u64
+convention). The first CI compile of `:app:compileDebugKotlin` rejected it with
+the only two errors in the whole build:
+
+```
+CallPeer.kt:137 Argument type mismatch: actual type is 'ULong', but 'UInt' was expected.
+CallPeer.kt:138 Argument type mismatch: actual type is 'ULong', but 'UInt' was expected.
+```
+
+So the real signature is `readExact(size: UInt) -> ByteArray`; corrected to
+`2u` / `.toUInt()`. Every other corrected name above compiled on the first pass,
+confirming the reference-app grounding.
 
 ## Not changed
 

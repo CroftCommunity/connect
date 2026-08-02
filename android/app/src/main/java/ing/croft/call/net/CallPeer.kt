@@ -134,8 +134,8 @@ class CallPeer(
     /** Read one length-prefixed hello frame off the recv half of [bi]. */
     private suspend fun readHello(bi: BiStream): String? = try {
         val recv = bi.recv()
-        val header = recv.readExact(2uL)
-        val body = recv.readExact(WireFormat.frameLength(header).toULong())
+        val header = recv.readExact(2u)
+        val body = recv.readExact(WireFormat.frameLength(header).toUInt())
         String(body, Charsets.UTF_8)
     } catch (t: Throwable) { null }
 
