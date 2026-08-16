@@ -5,9 +5,12 @@
   "type": "module",
   "description": "Croft Exchange lookup page (web) — resolution pipeline and unit tests.",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "mutate": "stryker run"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "vitest": "^2.1.9"
   }
 }

@@ -83,6 +83,11 @@ describe('buildInviteLink', () => {
     expect(() => buildInviteLink({ grant: 'g', secret: 's' })).toThrow(/repo/i);
     expect(() => buildInviteLink({ repo: 'r', secret: 's' })).toThrow(/grant/i);
   });
+
+  it('trims a trailing slash on a custom origin', () => {
+    const link = buildInviteLink({ origin: 'https://x.example/', repo: 'r', grant: 'g', secret: 's' });
+    expect(new URL(link).pathname).toBe('/redeem');
+  });
 });
 
 describe('parseInviteLink', () => {
@@ -211,5 +216,76 @@ describe('redeemTicket (ticket path, end to end with injected fetch)', () => {
     const deep = await redeemTicket(f, link, { now });
     expect(deep).toContain('endpoint=ep-phone');
     expect(f.calls.some((c) => c.includes('resolveHandle'))).toBe(true);
+  });
+
+  it('rejects a non-ticket (rule) grant — redeemTicket is ticket-only', async () => {
+    const f = stubFetch({
+      'plc.directory': { json: PLC_DOC },
+      ['collection=' + GRANT_COLLECTION]: { json: { value: { matcher: { type: 'mutuals' } } } },
+    });
+    const link = buildInviteLink({ repo: did, grant: 'g1', secret });
+    await expect(redeemTicket(f, link, { now })).rejects.toThrow(/not a ticket/i);
+  });
+
+  it('skips the policy fetch when the grant has no policyRef', async () => {
+    // No policy route stubbed: if redeem tried to fetch one, the stub would throw.
+    const f = stubFetch({
+      'plc.directory': { json: PLC_DOC },
+      ['collection=' + GRANT_COLLECTION]: { json: { value: { matcher: { type: 'ticket', secretHash: nodeSha(secret) }, devices: ['phone'] } } },
+      'collection=ing.croft.iroh.endpoint': { json: { value: { endpointId: 'ep-phone', homeRelay: 'https://relay.x' } } },
+    });
+    const link = buildInviteLink({ repo: did, grant: 'g1', device: 'phone', secret });
+    expect(await redeemTicket(f, link, { now })).toContain('endpoint=ep-phone');
+    expect(f.calls.some((c) => c.includes('collection=' + POLICY_COLLECTION))).toBe(false);
+  });
+
+  it("falls back to the grant's first device when the invite has no device hint", async () => {
+    const f = stubFetch({
+      'plc.directory': { json: PLC_DOC },
+      ['collection=' + GRANT_COLLECTION]: { json: { value: { matcher: { type: 'ticket', secretHash: nodeSha(secret) }, devices: ['laptop'] } } },
+      'collection=ing.croft.iroh.endpoint': { json: { value: { endpointId: 'ep-laptop' } } },
+    });
+    const link = buildInviteLink({ repo: did, grant: 'g1', secret }); // no device
+    const deep = await redeemTicket(f, link, { now });
+    expect(new URL(deep.replace('croftcall://', 'https://')).searchParams.get('device')).toBe('laptop');
+    expect(f.calls.some((c) => c.includes('rkey=laptop'))).toBe(true);
+  });
+
+  it('omits the device param when the resolved device is self', async () => {
+    const f = stubFetch({
+      'plc.directory': { json: PLC_DOC },
+      ['collection=' + GRANT_COLLECTION]: { json: { value: { matcher: { type: 'ticket', secretHash: nodeSha(secret) }, devices: [] } } },
+      'collection=ing.croft.iroh.endpoint': { json: { value: { endpointId: 'ep-self' } } },
+    });
+    const link = buildInviteLink({ repo: did, grant: 'g1', secret }); // no device
+    const deep = await redeemTicket(f, link, { now });
+    expect(new URL(deep.replace('croftcall://', 'https://')).searchParams.get('device')).toBeNull();
+    expect(f.calls.some((c) => c.includes('rkey=self'))).toBe(true);
+  });
+
+  it('does not enforce use-based rules at redeem — maxUses is call-time (§6/§7)', async () => {
+    const f = stubFetch({
+      'plc.directory': { json: PLC_DOC },
+      ['collection=' + GRANT_COLLECTION]: { json: { value: { matcher: { type: 'ticket', secretHash: nodeSha(secret) }, devices: ['phone'], policyRef: 'p1' } } },
+      ['collection=' + POLICY_COLLECTION]: { json: { value: { rules: [{ type: 'maxUses', n: 1 }] } } },
+      'collection=ing.croft.iroh.endpoint': { json: { value: { endpointId: 'ep-phone' } } },
+    });
+    const link = buildInviteLink({ repo: did, grant: 'g1', device: 'phone', secret });
+    expect(await redeemTicket(f, link, { now })).toContain('endpoint=ep-phone');
+  });
+});
+
+describe('grant / policy default fields', () => {
+  it('fetchGrant defaults devices to [] and policyRef to "" when absent', async () => {
+    const f = stubFetch({ 'com.atproto.repo.getRecord': { json: { value: { matcher: { type: 'ticket', secretHash: 'ab' } } } } });
+    const g = await fetchGrant(f, 'https://pds.example.com', 'did:plc:abc', 'g1');
+    expect(g.devices).toEqual([]);
+    expect(g.policyRef).toBe('');
+  });
+
+  it('fetchPolicy defaults rules to [] when absent', async () => {
+    const f = stubFetch({ 'com.atproto.repo.getRecord': { json: { value: {} } } });
+    const p = await fetchPolicy(f, 'https://pds.example.com', 'did:plc:abc', 'p1');
+    expect(p.rules).toEqual([]);
   });
 });
