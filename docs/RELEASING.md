@@ -1,7 +1,14 @@
 # Releasing Croft Connect
 
-This repo ships two halves and one contract, each with its own version. Releases
-follow [Semantic Versioning](https://semver.org): `vMAJOR.MINOR.PATCH`.
+This repo owns the **web page** and the **contract**. Releases follow
+[Semantic Versioning](https://semver.org): `vMAJOR.MINOR.PATCH`.
+
+> **The android app is retired here — final release `v0.2.0`.** Ongoing app
+> releases (the APK served for the two-device call test and beyond) live in
+> `croft/ops/RELEASING.md` — candidate prereleases, validated then promoted. The
+> android sections below are the **record of how connect v0.2.0 was cut**;
+> connect's live release concerns are now the web page (continuous Pages deploy)
+> and the contract version.
 
 ## What carries a version
 

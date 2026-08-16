@@ -1,19 +1,21 @@
 # Croft Connect
 
-Two halves of one small system for calling people by their Bluesky handle over
+**Croft Exchange** — the directory / status web page and the **canonical calling
+contract** for Croft, calling people by their Bluesky handle over
 [iroh](https://iroh.computer):
 
-- **Croft Exchange** (`web/`) — a static lookup page. Type a handle; it resolves
-  the DID, finds the data server, reads the caller's `ing.croft.iroh.endpoint`
-  record, and hands your device a `croftcall://` deep link. Deployed to GitHub
-  Pages at **https://connect.croft.ing**.
-- **Croft Call** (`android/`) — a minimal Android app that receives the deep
-  link and dials the endpoint over iroh (v0 "call" = authenticated connect +
-  hello-frame exchange, ALPN `croft-call/0`).
+- **`web/`** — a static lookup page. Type a handle; it resolves the DID, finds the
+  data server, reads the `ing.croft.iroh.endpoint` record(s), and hands your device
+  a `croftcall://` deep link. Deployed to GitHub Pages at
+  **https://connect.croft.ing**.
+- **`docs/contract.md`** — the canonical calling contract (lexicon, deep link, and
+  the capability model / grants). Owned here; consumed by the client.
 
-The two agree on exactly one contract — the deep link and the record shape —
-documented once in [`docs/contract.md`](docs/contract.md) and tested from both
-sides.
+The Croft Call **app** lives in **`CroftCommunity/croft`** (`croft/android`).
+`connect/android` here is a **retired stopgap** — a minimal deep-link receiver,
+last released as **v0.2.0** — kept for history, not developed further. See
+[`CLAUDE.md`](CLAUDE.md) for the connect/croft/relay split and
+[`docs/PHASE11-HANDOFF.md`](docs/PHASE11-HANDOFF.md) for the client handoff.
 
 ## Layout
 
@@ -21,7 +23,7 @@ sides.
 |-------------------------|-------------------------------------------------------------|
 | `web/`                  | Pages site: `index.html` shell + `resolver.js` module       |
 | `web-tests/`            | vitest unit tests for `resolver.js`                         |
-| `android/`              | the Kotlin/Gradle app (`ing.croft.call`)                   |
+| `android/`              | **retired** stopgap receiver (last release v0.2.0); the app is `croft/android` |
 | `docs/contract.md`      | the shared deep-link + record contract (source of truth)   |
 | `docs/adr/`             | architecture decision records                              |
 | `.github/workflows/`    | `web.yml` (test + Pages deploy), `android.yml` (test + APK) |
@@ -50,8 +52,9 @@ workflow artifact (attached to a GitHub Release on a `v*` tag).
 ## Status
 
 - Web: unit-tested, deploys to `connect.croft.ing` (custom domain, DNS verified).
-- Android: `VERIFY` markers in `CallPeer.kt` resolved against n0's reference app
-  (see [ADR-0002](docs/adr/0002-callpeer-api-verification.md)); build + tests
-  run in CI. Instrumented/two-device E2E is manual — see `android/README.md`.
+- Android: **retired** at v0.2.0. The Croft Call app is now `croft/android`
+  (`CroftCommunity/croft`); the two-device call test runs there against
+  candidate `v0.1.0-rc.1`. connect/android history in
+  [ADR-0002](docs/adr/0002-callpeer-api-verification.md).
 - Deferred (needs the human's keystore): Android App Links on
   `https://connect.croft.ing` — see [ADR-0003](docs/adr/0003-custom-domain-connect-croft-ing.md).

@@ -1,9 +1,10 @@
 # Croft Call — shared contract
 
-The lookup page (`web/`) and the Android app (`android/`) are two halves of one
-system. They agree on a small set of record shapes and links; this file is the
-source of truth for both. If either changes, update this file first, then both
-halves' tests, then the implementations.
+The lookup page (`web/`) and the Croft Call app (`croft/android`, in
+`CroftCommunity/croft`) agree on a small set of record shapes and links; this file
+is the canonical source of truth. (`connect/android` is a retired stopgap, last
+release v0.2.0.) If either side changes, update this file first, then both sides'
+tests, then the implementations.
 
 > **Ownership & consumers.** This file is the **canonical** calling contract, and
 > `connect` owns it. Consumers — the `croft` unified client (which points here as
