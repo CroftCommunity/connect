@@ -9,8 +9,11 @@
 // docs/contract.md (record shape + deep link); index.html is only glue.
 
 export const COLLECTION = 'ing.croft.iroh.endpoint';
+export const GRANT_COLLECTION = 'ing.croft.call.grant';
+export const POLICY_COLLECTION = 'ing.croft.call.policy';
 export const RKEY = 'self';
 export const SCHEME = 'croftcall';
+export const EXCHANGE_ORIGIN = 'https://connect.croft.ing';
 
 /** GET `url` and parse JSON, throwing an Error (with `.status`) on non-2xx. */
 export async function getJson(fetchImpl, url) {
@@ -71,19 +74,25 @@ export async function resolvePds(fetchImpl, did) {
   return pds;
 }
 
-/**
- * Read the caller's `ing.croft.iroh.endpoint` record (rkey `self`) from their
- * own PDS. Returns { endpointId, homeRelay, createdAt }. Throws if the record
- * is absent (getJson rejects on 4xx) or present but missing `endpointId`.
- */
-export async function fetchCallingRecord(fetchImpl, pdsUrl, did) {
+/** GET one record's `value` from a repo by collection + rkey (getRecord). */
+async function getRecordValue(fetchImpl, pdsUrl, did, collection, rkey) {
   const r = await getJson(
     fetchImpl,
     pdsUrl.replace(/\/$/, '') +
       '/xrpc/com.atproto.repo.getRecord?repo=' + encodeURIComponent(did) +
-      '&collection=' + COLLECTION + '&rkey=' + RKEY,
+      '&collection=' + collection + '&rkey=' + encodeURIComponent(rkey),
   );
-  const value = r.value || {};
+  return r.value || {};
+}
+
+/**
+ * Read one device's `ing.croft.iroh.endpoint` record (rkey `self` by default,
+ * or a named device per contract §1). Returns { endpointId, homeRelay,
+ * createdAt }. Throws if the record is absent (getJson rejects on 4xx) or
+ * present but missing `endpointId`.
+ */
+export async function fetchEndpoint(fetchImpl, pdsUrl, did, rkey = RKEY) {
+  const value = await getRecordValue(fetchImpl, pdsUrl, did, COLLECTION, rkey);
   if (!value.endpointId) throw new Error('record missing endpointId');
   return {
     endpointId: value.endpointId,
@@ -92,17 +101,136 @@ export async function fetchCallingRecord(fetchImpl, pdsUrl, did) {
   };
 }
 
+/** v1 compatibility: the primary (`self`) device's endpoint record. */
+export function fetchCallingRecord(fetchImpl, pdsUrl, did) {
+  return fetchEndpoint(fetchImpl, pdsUrl, did, RKEY);
+}
+
+/**
+ * Read a grant record (contract §2). Returns { matcher, devices, policyRef,
+ * createdAt }. Throws if the record has no `matcher`.
+ */
+export async function fetchGrant(fetchImpl, pdsUrl, did, rkey) {
+  const value = await getRecordValue(fetchImpl, pdsUrl, did, GRANT_COLLECTION, rkey);
+  if (!value.matcher) throw new Error('grant record missing matcher');
+  return {
+    matcher: value.matcher,
+    devices: value.devices || [],
+    policyRef: value.policyRef || '',
+    createdAt: value.createdAt,
+  };
+}
+
+/** Read a policy record (contract §3). Returns { rules, label, createdAt }. */
+export async function fetchPolicy(fetchImpl, pdsUrl, did, rkey) {
+  const value = await getRecordValue(fetchImpl, pdsUrl, did, POLICY_COLLECTION, rkey);
+  return { rules: value.rules || [], label: value.label, createdAt: value.createdAt };
+}
+
 /**
  * Build the croftcall deep link per docs/contract.md:
  *   croftcall://call?endpoint=<id>&relay=<url>&handle=<h>&did=<did>
  * `endpoint` is required; every value is URL-encoded; optional empty values
  * are omitted.
  */
-export function buildDeepLink({ endpointId, relay, handle, did } = {}) {
+export function buildDeepLink({ endpointId, relay, handle, did, device, grant } = {}) {
   if (!endpointId) throw new Error('endpointId required');
   let uri = SCHEME + '://call?endpoint=' + encodeURIComponent(endpointId);
   if (relay) uri += '&relay=' + encodeURIComponent(relay);
   if (handle) uri += '&handle=' + encodeURIComponent(handle);
   if (did) uri += '&did=' + encodeURIComponent(did);
+  if (device) uri += '&device=' + encodeURIComponent(device);
+  if (grant) uri += '&grant=' + encodeURIComponent(grant);
   return uri;
+}
+
+// --- Capability model: tickets, invite links, redemption (contract §2, §4, §6) ---
+
+/** SHA-256 of `input` as lowercase hex, via WebCrypto (browser + Node). */
+export async function sha256Hex(input) {
+  const bytes = new TextEncoder().encode(String(input));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Build an invite link per contract §4:
+ *   https://connect.croft.ing/redeem?repo=<did-or-handle>&grant=<rkey>[&device=<rkey>]#<secret>
+ * `repo` and `grant` are required. A ticket's `secret` goes in the FRAGMENT
+ * (never the query, so it never reaches a server); rule grants omit it.
+ */
+export function buildInviteLink({ origin = EXCHANGE_ORIGIN, repo, grant, device, secret } = {}) {
+  if (!repo) throw new Error('repo required');
+  if (!grant) throw new Error('grant required');
+  let url = origin.replace(/\/$/, '') + '/redeem?repo=' + encodeURIComponent(repo) +
+    '&grant=' + encodeURIComponent(grant);
+  if (device) url += '&device=' + encodeURIComponent(device);
+  if (secret) url += '#' + encodeURIComponent(secret);
+  return url;
+}
+
+/** Parse an invite link back into { repo, grant, device, secret }. */
+export function parseInviteLink(link) {
+  const u = new URL(link);
+  const repo = u.searchParams.get('repo') || '';
+  if (!repo) throw new Error('invite link missing repo');
+  const grant = u.searchParams.get('grant') || '';
+  if (!grant) throw new Error('invite link missing grant');
+  return {
+    repo,
+    grant,
+    device: u.searchParams.get('device') || '',
+    secret: u.hash ? decodeURIComponent(u.hash.slice(1)) : '',
+  };
+}
+
+/** True iff `secret` hashes to `secretHash` (contract §2 ticket matcher). */
+export async function verifyTicketSecret(secret, secretHash) {
+  return (await sha256Hex(secret)) === String(secretHash).toLowerCase();
+}
+
+/**
+ * Enforce the subset of policy rules a static page can honestly check at redeem
+ * time (contract §6): only `expires`. Use-based rules (`maxUses`,
+ * `burnOnSuccess`) are call-time only (§7) and deliberately ignored here.
+ */
+function enforceRedeemTimeRules(rules, now) {
+  for (const rule of rules || []) {
+    if (rule.type === 'expires' && now > Date.parse(rule.at)) {
+      throw new Error('grant expired');
+    }
+  }
+}
+
+/**
+ * Redeem a ticket invite link to a `croftcall://` deep link (contract §6).
+ * Pure read: resolves the repo, verifies the ticket secret against the grant,
+ * enforces redeem-time policy rules, reads the chosen device endpoint, and
+ * builds the deep link carrying `grant` (and `device`) for call-time re-check.
+ */
+export async function redeemTicket(fetchImpl, inviteLink, { now = Date.now() } = {}) {
+  const { repo, grant, device, secret } = parseInviteLink(inviteLink);
+  const did = repo.startsWith('did:') ? repo : await resolveHandle(fetchImpl, repo);
+  const pds = await resolvePds(fetchImpl, did);
+
+  const g = await fetchGrant(fetchImpl, pds, did, grant);
+  if (g.matcher.type !== 'ticket') throw new Error('grant is not a ticket');
+  if (!secret) throw new Error('ticket invite missing secret');
+  if (!(await verifyTicketSecret(secret, g.matcher.secretHash))) {
+    throw new Error('ticket secret does not match');
+  }
+  if (g.policyRef) {
+    const policy = await fetchPolicy(fetchImpl, pds, did, g.policyRef);
+    enforceRedeemTimeRules(policy.rules, now);
+  }
+
+  const chosen = device || g.devices[0] || RKEY;
+  const ep = await fetchEndpoint(fetchImpl, pds, did, chosen);
+  return buildDeepLink({
+    endpointId: ep.endpointId,
+    relay: ep.homeRelay,
+    did,
+    device: chosen === RKEY ? '' : chosen,
+    grant,
+  });
 }
