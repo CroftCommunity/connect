@@ -107,6 +107,31 @@ export function fetchCallingRecord(fetchImpl, pdsUrl, did) {
 }
 
 /**
+ * Enumerate a repo's devices via `com.atproto.repo.listRecords` (contract §1;
+ * no auth). Returns [{ rkey, endpointId, homeRelay, label }] with the rkey
+ * derived from each record's `uri`, skipping malformed records (no endpointId).
+ */
+export async function listEndpoints(fetchImpl, pdsUrl, did) {
+  const r = await getJson(
+    fetchImpl,
+    pdsUrl.replace(/\/$/, '') +
+      '/xrpc/com.atproto.repo.listRecords?repo=' + encodeURIComponent(did) +
+      '&collection=' + COLLECTION,
+  );
+  return (r.records || [])
+    .map((rec) => {
+      const value = rec.value || {};
+      return {
+        rkey: String(rec.uri || '').split('/').pop() || '',
+        endpointId: value.endpointId || '',
+        homeRelay: value.homeRelay || '',
+        label: value.label || '',
+      };
+    })
+    .filter((d) => d.endpointId);
+}
+
+/**
  * Read a grant record (contract §2). Returns { matcher, devices, policyRef,
  * createdAt }. Throws if the record has no `matcher`.
  */
