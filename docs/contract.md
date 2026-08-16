@@ -187,6 +187,15 @@ This is the seam where Cap meets the Membership backbone (relay/CISS). The wire
 format of the proof and the history store are Phase 11 / Milestone C work; this
 section fixes only the interface so both halves agree on the shape.
 
+**Reference implementation:** `web/resolver.js` provides the evaluation engine
+this interface names — `evaluateMatcher(matcher, ctx)` (§2: ticket / mutuals /
+registeredCallers, fails closed), `evaluateRules(rules, ctx)` (the composable
+revocation rules, fails closed on unknown types), and `evaluateGrant(grant, ctx)`
+(grant-exists AND matcher AND rules). The relay mirrors this logic in Phase 11;
+the static redeem page (§6) runs only the `expires` subset of `evaluateRules`.
+`ctx.usesSoFar` (prior successful calls) and `ctx.grantExists` are call-time facts
+the page cannot supply.
+
 ## 8. Confidentiality (v2 posture)
 
 - `ticket` grants (a hash) and the `mutuals` preset (names no one) are opaque by

@@ -14,6 +14,7 @@ export const POLICY_COLLECTION = 'ing.croft.call.policy';
 export const RKEY = 'self';
 export const SCHEME = 'croftcall';
 export const EXCHANGE_ORIGIN = 'https://connect.croft.ing';
+export const APPVIEW = 'https://public.api.bsky.app';
 
 /** GET `url` and parse JSON, throwing an Error (with `.status`) on non-2xx. */
 export async function getJson(fetchImpl, url) {
@@ -258,4 +259,87 @@ export async function redeemTicket(fetchImpl, inviteLink, { now = Date.now() } =
     device: chosen === RKEY ? '' : chosen,
     grant,
   });
+}
+
+// --- Rule matchers: identity-based qualification (contract §2) ---
+
+/**
+ * Social-graph primitive: is `actorDid` a mutual of `otherDid`? Reads
+ * app.bsky.graph.getRelationships on the public AppView (no auth) — mutual iff
+ * the actor both follows (`following`) and is followed by (`followedBy`) the other.
+ */
+export async function areMutuals(fetchImpl, actorDid, otherDid) {
+  const r = await getJson(
+    fetchImpl,
+    APPVIEW + '/xrpc/app.bsky.graph.getRelationships?actor=' + encodeURIComponent(actorDid) +
+      '&others=' + encodeURIComponent(otherDid),
+  );
+  const rel = (r.relationships || [])[0] || {};
+  return Boolean(rel.following) && Boolean(rel.followedBy);
+}
+
+/**
+ * Does a grant's matcher admit the caller (contract §2)? Fails closed: an
+ * unknown type, a missing secret, or a rule with no proven caller identity all
+ * return false. `context` = { provenDid, secret, calleeDid }:
+ *   ticket            → the presented `secret` hashes to `matcher.secretHash`
+ *   mutuals           → `provenDid` is a mutual of `calleeDid`
+ *   registeredCallers → `provenDid` is in `matcher.dids`
+ * Identity proof (obtaining `provenDid`) is the caller's job — Phase 11 (§7).
+ */
+export async function evaluateMatcher(fetchImpl, matcher, context = {}) {
+  const { provenDid, secret, calleeDid } = context;
+  switch (matcher && matcher.type) {
+    case 'ticket':
+      return Boolean(secret) && verifyTicketSecret(secret, matcher.secretHash);
+    case 'mutuals':
+      return Boolean(provenDid) && areMutuals(fetchImpl, provenDid, calleeDid);
+    case 'registeredCallers':
+      return Boolean(provenDid) && (matcher.dids || []).includes(provenDid);
+    default:
+      return false;
+  }
+}
+
+// --- Call-time evaluation: composable revocation rules (contract §7) ---
+// Reference implementation of the call-time interface. The relay mirrors this in
+// Phase 11; the static redeem page enforces only the `expires` subset (§6).
+
+/**
+ * Do all composable revocation rules still hold? Fails closed: an unknown rule
+ * type denies. `context` = { now, usesSoFar } where usesSoFar is the count of
+ * prior *successful* calls under this grant (observable only at call time).
+ *   expires       → now is not past `rule.at`
+ *   maxUses       → usesSoFar < rule.n
+ *   burnOnSuccess → usesSoFar < 1  (one-use)
+ */
+export function evaluateRules(rules, { now = Date.now(), usesSoFar = 0 } = {}) {
+  for (const rule of rules || []) {
+    switch (rule && rule.type) {
+      case 'expires':
+        if (now > Date.parse(rule.at)) return false;
+        break;
+      case 'maxUses':
+        if (usesSoFar >= rule.n) return false;
+        break;
+      case 'burnOnSuccess':
+        if (usesSoFar >= 1) return false;
+        break;
+      default:
+        return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Should a call be admitted (contract §7)? Admit iff the grant still exists AND
+ * its matcher holds AND every revocation rule holds. `context` = { grantExists,
+ * provenDid, secret, calleeDid, now, usesSoFar }. Cheap checks (existence, rules)
+ * run before the matcher, which may touch the network for `mutuals`.
+ */
+export async function evaluateGrant(fetchImpl, grant, context = {}) {
+  if (context.grantExists === false) return false;
+  if (!evaluateRules(grant.rules, context)) return false;
+  return evaluateMatcher(fetchImpl, grant.matcher, context);
 }
