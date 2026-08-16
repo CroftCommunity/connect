@@ -14,8 +14,9 @@ so the contract does not silently fork.
 - **`web/`** is the directory / status page — the exchange: handle → DID → PDS →
   endpoint, callability status, and cap redeem. Deployed to GitHub Pages
   (`connect.croft.ing`), continuously from `main` (not release-gated).
-- **`android/`** is a **stopgap** croftcall receiver (the shipped v0.1.0 debug APK).
-  Keep it minimal — deep-link capture only. **Do not over-invest here** (see below).
+- **`android/`** is a **retired** croftcall receiver — last release **v0.2.0**. The
+  one Croft Call app is now **`croft/android`** (consolidated 2026-08-16). Do not
+  develop this further; app changes go to `croft/android`.
 
 ## The relationships (get these right)
 
@@ -30,9 +31,10 @@ relay = croft-stack ← the Membership/admission backbone (CISS accounting, budg
                    call-time). Not connect, not the client.
 ```
 
-- **The two android apps are one app, converging.** `connect/android` (stopgap)
-  folds into `croft/android` (the real client, "first target"). Client-side
-  consumption of the cap contract belongs in `croft/android`, not here.
+- **The two android apps are now one** (consolidated 2026-08-16): `connect/android`
+  is retired at v0.2.0; **`croft/android`** is the sole Croft Call app. Client-side
+  cap consumption (redeem, callability, `evaluateGrant`) belongs there — see
+  `docs/PHASE11-HANDOFF.md`.
 - **The calling design takes input from all three surfaces** — connect (contract),
   relay (admission / the call-time §7 interface), and the app. Keep the contract
   cohesive with the relay's admission model; don't design the contract in isolation.
