@@ -5,6 +5,13 @@ system. They agree on a small set of record shapes and links; this file is the
 source of truth for both. If either changes, update this file first, then both
 halves' tests, then the implementations.
 
+> **Ownership & consumers.** This file is the **canonical** calling contract, and
+> `connect` owns it. Consumers — the `croft` unified client (which points here as
+> ground truth) and the croft-relay tiered-admission plan — track it; they do not
+> redefine it. A breaking change is deliberate and coordinated (bump
+> `Contract version` below, update the consumers in the same change). Do not fork
+> this contract into another repo. See `CLAUDE.md` for the connect/croft/relay split.
+
 **Contract version: 2.** v1 defined a single endpoint record + the deep link.
 v2 adds the **capability model** — *who* may call you — as public records in
 your own atproto repo: per-device endpoints, grants, and policies. The v1 shapes
