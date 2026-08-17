@@ -23,6 +23,7 @@ last released as **v0.2.0** — kept for history, not developed further. See
 |-------------------------|-------------------------------------------------------------|
 | `web/`                  | Pages site: `index.html` shell + `resolver.js` module       |
 | `web-tests/`            | vitest unit tests for `resolver.js`                         |
+| `web/oauth-client-metadata.json` | atproto OAuth client metadata for the croft client (`client_id` URL); contents owned by `croft` (its M3 plan) |
 | `android/`              | **retired** stopgap receiver (last release v0.2.0); the app is `croft/android` |
 | `docs/contract.md`      | the shared deep-link + record contract (source of truth)   |
 | `docs/adr/`             | architecture decision records                              |
