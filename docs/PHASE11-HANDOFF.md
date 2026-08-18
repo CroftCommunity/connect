@@ -7,6 +7,16 @@ landed. **Build against v2, not the single-record shape.** This resolves the
 "Both are in flux / do not implement" and the "Open: canonical home" notes in
 `croft/docs/CONTRACT.md`: connect stays canonical, and it moved deliberately.
 
+**Client status (2026-08-18):** croft has shipped and device-validated items
+1, 2 and 4 below — ticket redemption + deep-link consumption in croft
+`v0.3.0`, the callability resolver and atproto OAuth identity proof
+(`provenDid`) in croft `v0.4.0` (plan:
+`croft/plans/2026-08-17-2-plan-m3-identity-proof.md`). The one
+connect-side artifact that grew out of it is
+`web/oauth-client-metadata.json` (the OAuth `client_id` document; croft
+owns its contents). Item 3 — call-time `evaluateGrant` + relay
+enforcement — is the remaining milestone (croft M4, with croft-stack).
+
 ## What connect provides (the callee-side surface — done)
 
 - **Record shapes** (`docs/contract.md` §1–§3): per-device `endpoint`, `grant`
@@ -45,24 +55,28 @@ me, and do its rules still hold," i.e. `evaluateGrant`, not a three-value lookup
 
 ## What the client (croft) must build — Phase 11
 
-1. **Callability resolver** (the rendered-principal seam croft already owns): for a
+1. **Callability resolver** ✅ (croft `v0.4.0`, engine since M2): for a
    principal, `listEndpoints` + read grants → derive `callable / not-listed /
-   may-not-permit`. Honour croft's own **resolution-cost / metadata-leak** decision
-   (lazy-on-tap vs cached-TTL vs batched) — resolving callability is PDS lookups
-   that reveal who you are looking at.
-2. **Identity-proof acquisition** — the one thing the static page cannot do. To
-   satisfy a `mutuals` / `registeredCallers` matcher, the caller must present a
-   **proven DID** (`provenDid`). That means an atproto **OAuth** session against the
-   caller's PDS. The engine consumes `provenDid`; obtaining it is client work.
-3. **Call-time evaluation as an effect.** `evaluateGrant` is the §7 admission check
+   may-not-permit`. Croft's **resolution-cost / metadata-leak** decision
+   (its D1): lazy-on-tap plus a TTL cache of derived state, identity-keyed
+   — resolving callability is PDS lookups that reveal who you are looking at.
+2. **Identity-proof acquisition** ✅ (croft `v0.4.0`) — the one thing the
+   static page cannot do. To satisfy a `mutuals` / `registeredCallers`
+   matcher, the caller presents a **proven DID** (`provenDid`) from an
+   atproto **OAuth** session against the caller's PDS. Client metadata is
+   hosted here (`web/oauth-client-metadata.json`, croft-owned contents);
+   the redirect scheme is `ing.croft.connect:/oauth` per the spec's
+   reverse-domain rule.
+3. **Call-time evaluation as an effect.** ⬜ remaining (croft M4).
+   `evaluateGrant` is the §7 admission check
    (grant-exists AND matcher AND rules, with `usesSoFar`/`grantExists` as call-time
    facts). In croft's pure-core architecture this is an **effect + port**, never an
    awaited call inside a core: the core emits "evaluate this grant" as data; the
    shell (or the relay) performs it. `usesSoFar` (prior successful calls) and
    `grantExists` come from the relay/CISS Membership side, not the page.
-4. **Deep-link consumption.** Capture `device` + `grant` from `croftcall://` (the
-   `connect/android` stopgap already does — see `Callee`). The real client
-   consumes them in `croft/android`.
+4. **Deep-link consumption.** ✅ (croft `v0.3.0`) — `device` + `grant`
+   captured from `croftcall://` and invite links redeemed per §6, in
+   `croft/android` (the `connect/android` stopgap is retired).
 
 ## Ownership boundary (so neither side waits on the other)
 
