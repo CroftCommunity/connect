@@ -67,7 +67,17 @@ me, and do its rules still hold," i.e. `evaluateGrant`, not a three-value lookup
    hosted here (`web/oauth-client-metadata.json`, croft-owned contents);
    the redirect scheme is `ing.croft.connect:/oauth` per the spec's
    reverse-domain rule.
-3. **Call-time evaluation as an effect.** ⬜ remaining (croft M4).
+3. **Call-time evaluation as an effect.** 🟨 in progress (croft M4,
+   2026-08-20; plan `croft/plans/2026-08-20-1-plan-m4-call-time-admission.md`).
+   The relay side is BUILT (croft-stack Phase 8: `/grantCall` mints a
+   sponsorship+scope relay token against fresh grant reads — §7 evaluated
+   server-side, `usesSoFar`/revocation as call-time facts there). Client
+   M4a+M4b landed: the admit client, the ticket secret retained through
+   redeem, and the caller proof (`getServiceAuth` at the caller's PDS,
+   DPoP `ath`-bound). One connect-side consequence, already live: the
+   client metadata's `scope` grew `transition:generic` — under OAuth,
+   `getServiceAuth` needs an RPC permission the bare `atproto` scope
+   lacks, and the entryway does not yet advertise granular `rpc:` scopes.
    `evaluateGrant` is the §7 admission check
    (grant-exists AND matcher AND rules, with `usesSoFar`/`grantExists` as call-time
    facts). In croft's pure-core architecture this is an **effect + port**, never an
