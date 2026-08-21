@@ -6,7 +6,7 @@
   "redirect_uris": ["ing.croft.connect:/oauth"],
   "grant_types": ["authorization_code", "refresh_token"],
   "response_types": ["code"],
-  "scope": "atproto",
+  "scope": "atproto transition:generic",
   "token_endpoint_auth_method": "none",
   "dpop_bound_access_tokens": true
 }
