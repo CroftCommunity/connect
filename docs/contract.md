@@ -197,6 +197,15 @@ the static redeem page (§6) runs only the `expires` subset of `evaluateRules`.
 `ctx.usesSoFar` (prior successful calls) and `ctx.grantExists` are call-time facts
 the page cannot supply.
 
+**Known divergence (2026-08-20, to port back):** `evaluateRules` here admits a
+grant whose `expires.at` does not parse (`Date.parse` → `NaN`, and `now > NaN`
+is false — the rule silently holds forever). The relay's mirror deliberately
+**fails closed** on an unevaluable rule (croft-stack
+`croft-relay-admit/src/caps.rs`, pinned by test), which is the correct posture
+at the durable gate. Until the fix lands here, an unparseable expiry behaves
+differently at redeem (admits) and at call time (denies); the call-time answer
+wins.
+
 ## 8. Confidentiality (v2 posture)
 
 - `ticket` grants (a hash) and the `mutuals` preset (names no one) are opaque by
