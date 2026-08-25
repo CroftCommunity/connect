@@ -1,5 +1,12 @@
 # connect — agent guidance
 
+## Identity (workspace architecture)
+
+**Scope:** The calling CONTRACT (`docs/contract.md`, canonical), the directory/exchange web at connect.croft.ing, hosted OAuth client metadata, a stopgap android receiver.
+**Not this repo:** the real client (croft — the android apps converge there); admission (croft-stack).
+**Provides:** the contract, callability resolution, metadata hosting. **Consumes:** metadata content owned by croft M3.
+Card + altitudes: `CroftC/.claude/ARCHITECTURE.md`.
+
 `CroftCommunity/connect` is the **calling-contract owner** and the directory /
 status web property for Croft calling. If you are working here, hold these facts
 so the contract does not silently fork.
