@@ -13,6 +13,20 @@ const ticketGrant = (rules = []) => ({ matcher: { type: 'ticket', secretHash: no
 const okCtx = (extra = {}) => ({ secret: 's3cr3t', grantExists: true, now, usesSoFar: 0, ...extra });
 
 describe('evaluateRules (composable revocation rules) — fails closed', () => {
+  it('denies a rule whose expiry does not parse — the relay mirror already does (contract §7 divergence, ported back)', () => {
+    // Date.parse('never') is NaN and `now > NaN` is false: the old code let
+    // an unparseable expiry hold FOREVER. An unevaluable rule cannot be
+    // honoured — fail closed, exactly croft-relay-admit's caps.rs posture.
+    expect(evaluateRules([{ type: 'expires', at: 'never' }], { now, usesSoFar: 0 })).toBe(false);
+    expect(evaluateRules([{ type: 'expires' }], { now, usesSoFar: 0 })).toBe(false);
+  });
+
+  it('holds AT the expiry instant and denies one tick past it (mirror: caps.rs "now <= at")', () => {
+    const atNow = new Date(now).toISOString();
+    expect(evaluateRules([{ type: 'expires', at: atNow }], { now, usesSoFar: 0 })).toBe(true);
+    expect(evaluateRules([{ type: 'expires', at: atNow }], { now: now + 1, usesSoFar: 0 })).toBe(false);
+  });
+
   it('passes when every rule holds and denies when any fails', () => {
     expect(evaluateRules([{ type: 'expires', at: future }], { now, usesSoFar: 0 })).toBe(true);
     expect(evaluateRules([{ type: 'expires', at: past }], { now, usesSoFar: 0 })).toBe(false);

@@ -222,8 +222,10 @@ export async function verifyTicketSecret(secret, secretHash) {
  */
 function enforceRedeemTimeRules(rules, now) {
   for (const rule of rules || []) {
-    if (rule.type === 'expires' && now > Date.parse(rule.at)) {
-      throw new Error('grant expired');
+    if (rule.type === 'expires') {
+      const at = Date.parse(rule.at);
+      // Unevaluable = expired, not eternal (same posture as evaluateRules).
+      if (Number.isNaN(at) || now > at) throw new Error('grant expired');
     }
   }
 }
@@ -316,9 +318,14 @@ export async function evaluateMatcher(fetchImpl, matcher, context = {}) {
 export function evaluateRules(rules, { now = Date.now(), usesSoFar = 0 } = {}) {
   for (const rule of rules || []) {
     switch (rule && rule.type) {
-      case 'expires':
-        if (now > Date.parse(rule.at)) return false;
+      case 'expires': {
+        // Fail closed on an unevaluable rule (contract §7; ports back the
+        // relay mirror's posture): Date.parse -> NaN made `now > NaN` false,
+        // so an unparseable expiry held FOREVER.
+        const at = Date.parse(rule.at);
+        if (Number.isNaN(at) || now > at) return false;
         break;
+      }
       case 'maxUses':
         if (usesSoFar >= rule.n) return false;
         break;

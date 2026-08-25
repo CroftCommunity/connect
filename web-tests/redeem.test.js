@@ -210,6 +210,21 @@ describe('redeemTicket (ticket path, end to end with injected fetch)', () => {
     await expect(redeemTicket(f, link, { now })).rejects.toThrow(/expired/i);
   });
 
+  it('redeems AT the expiry instant and rejects one tick past (mirror boundary)', async () => {
+    const atNow = new Date(now).toISOString();
+    const f = stubFetch(routes({ rules: [{ type: 'expires', at: atNow }] }));
+    const link = buildInviteLink({ repo: did, grant: 'g1', device: 'phone', secret });
+    await expect(redeemTicket(f, link, { now })).resolves.toBeTruthy();
+    const f2 = stubFetch(routes({ rules: [{ type: 'expires', at: atNow }] }));
+    await expect(redeemTicket(f2, link, { now: now + 1 })).rejects.toThrow(/expired/i);
+  });
+
+  it('rejects an expiry that does not parse — unevaluable is expired, not eternal', async () => {
+    const f = stubFetch(routes({ rules: [{ type: 'expires', at: 'not-a-date' }] }));
+    const link = buildInviteLink({ repo: did, grant: 'g1', device: 'phone', secret });
+    await expect(redeemTicket(f, link, { now })).rejects.toThrow(/expир|expiry|expired|unparseable/i);
+  });
+
   it('resolves a handle repo before reading records', async () => {
     const f = stubFetch({ ...routes(), 'com.atproto.identity.resolveHandle': { json: { did } } });
     const link = buildInviteLink({ repo: 'callee.bsky.social', grant: 'g1', device: 'phone', secret });
