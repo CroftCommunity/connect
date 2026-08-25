@@ -60,3 +60,11 @@ relay = croft-stack ← the Membership/admission backbone (CISS accounting, budg
   release_tag=vX.Y.Z`.
 - **Git identity:** chasemp — `git@github-personal:CroftCommunity/connect.git`,
   committer `Chase Pettet <chase@owasp.org>`. Don't commit/push unless asked.
+
+## Concurrent sessions (workspace norm)
+
+Multiple agent sessions share the `CroftC/` workspace. Do multi-turn work in a dedicated
+worktree — `git -C connect worktree add ../worktrees/connect/<slug> -b claude/<slug>` — never in
+this checkout (peer sessions stage with `git add -A`; loose files get swept into unrelated
+commits). Contested surfaces here — claim in `CroftC/.coordination/claims/` before
+touching: **`docs/contract.md`** (the canonical calling contract — breaks are deliberate + coordinated, never by drift), OAuth client metadata under `web/`. Full protocol and the reasons behind it: `CroftC/.claude/COORDINATION.md`.
