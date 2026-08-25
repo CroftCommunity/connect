@@ -1,6 +1,7 @@
 # ADR-0001: One repo for the page and the app
 
 Status: accepted (2026-08-02)
+Tags: repo-structure, web, android
 
 ## Context
 

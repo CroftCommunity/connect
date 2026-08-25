@@ -1,6 +1,7 @@
 # ADR-0002: Resolving the iroh `VERIFY` markers in CallPeer.kt
 
 Status: accepted (2026-08-02)
+Tags: iroh, calling, android
 
 ## Context
 

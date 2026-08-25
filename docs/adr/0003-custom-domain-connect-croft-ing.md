@@ -1,6 +1,7 @@
 # ADR-0003: Custom domain `connect.croft.ing`, App Links still deferred
 
 Status: accepted (2026-08-02)
+Tags: dns, deploy, web, app-links
 
 ## Context
 
