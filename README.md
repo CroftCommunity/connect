@@ -55,7 +55,7 @@ workflow artifact (attached to a GitHub Release on a `v*` tag).
 - Web: unit-tested, deploys to `connect.croft.ing` (custom domain, DNS verified).
 - Android: **retired** at v0.2.0. The Croft Call app is now `croft/android`
   (`CroftCommunity/croft`); the two-device call test runs there against
-  candidate `v0.1.0-rc.1`. connect/android history in
+  the released croft/android app (v0.4.0 at time of writing). connect/android history in
   [ADR-0002](docs/adr/0002-callpeer-api-verification.md).
 - Deferred (needs the human's keystore): Android App Links on
   `https://connect.croft.ing` — see [ADR-0003](docs/adr/0003-custom-domain-connect-croft-ing.md).
