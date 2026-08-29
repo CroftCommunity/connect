@@ -9,6 +9,33 @@
 
 ## Open
 
+- [ ] **`android/` has no Gradle dependency locking, so its JVM dependencies cannot be
+  scanned.** Found by the workspace supply-chain sweep, 2026-08-29
+  (`CroftC/.claude/SUPPLY-CHAIN.md` rule 6). There is no `gradle.lockfile` and no
+  `verification-metadata.xml`, so there is no resolved dependency set on disk and no
+  SCA scanner — osv-scanner, Dependabot, or otherwise — has anything to read. The
+  surface is not un-audited; it is **un-auditable**, which is why locking is a
+  prerequisite rather than a finding.
+
+  `croft/android` took the same fix on 2026-08-29 and it is three lines in the root
+  build file plus generated locks:
+
+  ```kotlin
+  subprojects { dependencyLocking { lockAllConfigurations() } }
+  ```
+  then `./gradlew :app:dependencies --write-locks`.
+
+  Worth knowing before reading the first scan: croft's produced 43 advisories, 19 of
+  them High — and **zero reached the APK**. Every one arrived through AGP's
+  `_internal-unified-test-platform-*` build-time harness. Intersect findings against
+  `releaseRuntimeClasspath`/`releaseCompileClasspath` before treating any of them as
+  shipped, or the headline number will be wrong in the alarming direction.
+
+  Verified there that locking does not break the build (`:app:assembleDebug` green
+  with lock validation active). Keep the regeneration command next to the locking
+  block — a lock nobody can regenerate becomes a lock someone deletes.
+
+
 - [ ] **Incoming: a contract proposal for group-derived calling grants (croft P7 S3).**
   The croft-side product-shell adoption plan
   (`croft/plans/2026-08-25-1-plan-product-shell-adoption.md`, backlog row **E137**)
