@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Croft Exchange lookup page (web) — resolution pipeline and unit tests.",
+  "description": "Croft Exchange lookup page (web) \u2014 resolution pipeline and unit tests.",
   "scripts": {
     "test": "vitest run",
     "mutate": "stryker run"
@@ -12,5 +12,8 @@
     "@stryker-mutator/core": "^10.0.0",
     "@stryker-mutator/vitest-runner": "^10.0.0",
     "vitest": "^2.1.9"
+  },
+  "overrides": {
+    "qs": ">=6.15.2"
   }
 }
