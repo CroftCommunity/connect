@@ -9,6 +9,12 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/web.yml'
+      # The lexicon register gate reads these two, so a change to EITHER has to
+      # run the suite. Without them the gate is real and never fires for the
+      # drift it exists to catch: a collection added to the contract with no
+      # register entry touches only docs/ and would sail past.
+      - 'docs/contract.md'
+      - 'docs/LEXICON-REGISTER.md'
   pull_request:
     paths:
       - 'web/**'
@@ -16,6 +22,12 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/web.yml'
+      # The lexicon register gate reads these two, so a change to EITHER has to
+      # run the suite. Without them the gate is real and never fires for the
+      # drift it exists to catch: a collection added to the contract with no
+      # register entry touches only docs/ and would sail past.
+      - 'docs/contract.md'
+      - 'docs/LEXICON-REGISTER.md'
   workflow_dispatch:
 
 permissions:

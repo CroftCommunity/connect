@@ -103,11 +103,28 @@ No type in `ing.croft.*` is minted for anything the `com.atproto.*` surface alre
 
 - ~~Close the three ecosystem checks.~~ **Done 2026-09-08** — see each entry and the method
   note above. The exemption list is empty.
-- **A test pinning this register against the collections the code actually names**
-  (`croft/android/app/.../caps/Xrpc.kt` holds them as `ENDPOINT_COLLECTION`,
-  `GRANT_COLLECTION`, `POLICY_COLLECTION`). Forage gates its register this way and it is
-  what stops the register drifting into fiction. Until that exists, this file is prose and
-  should be read as such.
+- ~~A test pinning this register.~~ **Done 2026-09-08** —
+  `web-tests/lexicon-register.test.js`. The pin is **within-repo**: `contract.md` DEFINES
+  the collections, so it is the authority, and the register must cover exactly what it
+  defines — no missing entries, nothing invented, all three fields present, and no entry
+  still saying `NOT DONE`.
+
+  **It was watched fail before being trusted**, in all three directions: a renamed entry
+  trips both the missing-entry and the invented-entry assertions, and a re-marked check
+  trips the exemption assertion. There is also a non-vacuity assertion, because two empty
+  sets compare equal and a regex that quietly stopped matching would otherwise make the
+  whole file pass while checking nothing.
+
+  **The trigger needed fixing for the gate to be real.** `web.yml` fired only on
+  `web/**`, `web-tests/**` and the package files — so a collection added to
+  `contract.md`, which is precisely the drift this gate exists to catch, touches only
+  `docs/` and would have sailed past a gate that never ran. Both `contract.md` and this
+  file are now in the `push` and `pull_request` path filters.
+
+  Not covered, and deliberately: the client's own constants
+  (`croft/android/app/.../caps/Xrpc.kt`) are in another repo, so this test cannot read
+  them. A collection renamed there without the contract changing would still drift
+  silently. Closing that needs a cross-repo check and is a different piece of work.
 
 ## A caution for whoever closes those checks
 
