@@ -12,19 +12,23 @@ wearing a namespace. Models to follow: `forage/docs/LEXICON-REGISTER.md` (per-ty
 rejected candidates in a table) and `arecipe/docs/LEXICONS.md` (which also tracks
 *consumes* and *dropped*).
 
-## Status: backported 2026-09-08, and honest about what that means
+## Status: backported 2026-09-08, checks closed the same day
 
-All three types below **predate this rule**. The register is being written now, after the
-fact, so the ecosystem-check field reads **NOT DONE** rather than a reconstruction.
+All three types **predate this rule**, so the register was written after the fact and
+opened with every ecosystem check marked `NOT DONE` — the rule's own instruction, because
+a register that is fiction on the day it is written is worse than no register.
 
-That is the rule's own instruction, not a shortcut:
+**The three checks were then done for real, against the corpora rather than from memory,
+and the exemption list is now empty.** Forage reached zero the same way on 2026-08-29;
+this list could only shrink and did.
 
-> **A type that predates the rule says so.** Do not back-fill checks you did not perform —
-> a register that is fiction on the day it is written is worse than no register.
-
-Forage carried nine such entries and then closed them properly on 2026-08-29, at which
-point its exemption list reached zero. **This list can only shrink.** Doing these three
-checks for real is filed work, not a formality — see *Owed* below.
+**Method, so the checks can be judged rather than trusted.** The official corpus was
+enumerated from `bluesky-social/atproto@main` — **404 lexicon files** on 2026-09-08 (forage
+counted 435 on 2026-08-29; the corpus moves, which is why the date is on every check). The
+names were grepped for `endpoint|device|service|key|invite|grant|policy|permission|capab`
+and every record-typed hit was opened and read. The community namespace was read at its
+**live** home: `tangled.org/lexicon.community/lexicons` — see the caution at the foot of
+this file, because the GitHub repo it moved from is archived and still cited elsewhere.
 
 ## Types
 
@@ -37,7 +41,20 @@ checks for real is filed work, not a formality — see *Owed* below.
 - **Why ours** — the record answers "which transport identity is this person's device, and
   where does it camp". It is a *transport address for a device*, not a profile, a service
   declaration or a link.
-- **Ecosystem check** — **NOT DONE** (predates the rule).
+- **Ecosystem check (2026-09-08).** The strongest candidate is not a lexicon at all:
+
+  | Candidate | What it is | Why it does not hold this |
+  |---|---|---|
+  | DID document `service` entry | atproto's canonical answer to "where is this reachable", and the spec says third parties may add bespoke entries | **`serviceEndpoint` is constrained to an HTTPS URL — scheme, hostname, optional port.** An iroh `endpointId` is a 64-character public key and simply cannot be written there; `homeRelay` could be, but it is the optional half. Identity-scoped rather than per-device, and a DID update is a signed PLC operation — the wrong cost for a value that changes whenever a device rebinds |
+  | `app.bsky.labeler.service` | the only record type in the official set that declares a "service" | `key: literal:self` — a singleton, so it cannot be one-per-device; and it holds `policies`/`labels`, not a network address. Even a labeler's own endpoint lives in its DID document, not here |
+  | `app.bsky.actor.profile` | identity presentation | singleton, no address fields |
+
+  **The pattern, which is why no fifth candidate would change the answer:** atproto puts
+  *network location* in the DID document and everything else in records. There is no record
+  type for "an address" because addresses were never meant to be records. Ours is a record
+  precisely because it is **per-device and changes at a cadence a DID document cannot
+  carry** — and because the value it must hold is a public key, which the DID document's
+  service field is not allowed to contain.
 
 ### `ing.croft.call.grant`
 
@@ -47,7 +64,19 @@ checks for real is filed work, not a formality — see *Owed* below.
   capability is proven at mint time, not published.
 - **Why ours** — a capability granted to an unnamed bearer, against the grantee's own
   device set. It is not a follow, a block, a list membership or an invite to a service.
-- **Ecosystem check** — **NOT DONE** (predates the rule).
+- **Ecosystem check (2026-09-08).**
+
+  | Candidate | Why it does not hold this |
+  |---|---|
+  | `app.bsky.graph.list` + `listitem` | a `listitem` **names the subject DID**. A grant must not name the grantee (contract §8) — that anonymity is the security property, not a detail. Also inverted authorship, the same asymmetry forage recorded for memberships |
+  | `app.bsky.graph.starterpack` | a list plus feeds for onboarding; names its members |
+  | `com.atproto.server.createInviteCode` / `createInviteCodes` | **procedures, not records** — server-side, for account creation, and nothing to put in a repo |
+  | `tools.ozone.verification.grantVerifications` | an ozone procedure on the moderation side; "grant" is the same word for a different act |
+
+  **The pattern:** every sharing primitive in the official set **names its subject** — that
+  is what makes them useful for graphs. A bearer capability that is deliberately anonymous
+  in the grantee has no analogue, and could not be built from one without giving up the
+  property it exists for.
 
 ### `ing.croft.call.policy`
 
@@ -55,7 +84,13 @@ checks for real is filed work, not a formality — see *Owed* below.
   referenced by many grants.
 - **Why ours** — the conditions half of the capability model above; it exists only because
   `grant` exists.
-- **Ecosystem check** — **NOT DONE** (predates the rule).
+- **Ecosystem check (2026-09-08).** Nothing in the official corpus holds "the conditions a
+  capability is evaluated under". The nearest things are XRPC procedures that *apply*
+  limits server-side (`com.atproto.server.*` invite handling, `tools.ozone.*`), and a
+  procedure has no repo record to reference. `app.bsky.actor.defs` preference types are
+  the closest record-shaped thing and are private-to-owner display settings, not
+  third-party-evaluated conditions. It is a separate type from `grant` for one stated
+  reason — editing conditions once for many grants — and would otherwise be inlined.
 
 ## Consumes (defined elsewhere, used here)
 
@@ -66,9 +101,8 @@ No type in `ing.croft.*` is minted for anything the `com.atproto.*` surface alre
 
 ## Owed
 
-- **Close the three ecosystem checks**, against the real corpora rather than from memory.
-  Forage's 2026-08-29 pass counted **26 record types** among the 435 official lexicons —
-  a set small enough to read properly — plus the community namespace.
+- ~~Close the three ecosystem checks.~~ **Done 2026-09-08** — see each entry and the method
+  note above. The exemption list is empty.
 - **A test pinning this register against the collections the code actually names**
   (`croft/android/app/.../caps/Xrpc.kt` holds them as `ENDPOINT_COLLECTION`,
   `GRANT_COLLECTION`, `POLICY_COLLECTION`). Forage gates its register this way and it is
