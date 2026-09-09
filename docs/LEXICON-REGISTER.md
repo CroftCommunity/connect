@@ -121,6 +121,12 @@ No type in `ing.croft.*` is minted for anything the `com.atproto.*` surface alre
   `docs/` and would have sailed past a gate that never ran. Both `contract.md` and this
   file are now in the `push` and `pull_request` path filters.
 
+  **The trigger fix was proven end to end by a docs-only change.** The PR that added it
+  also touched `web-tests/` and `web.yml`, which were already in the filter — so its green
+  `test` job proved nothing about the new paths. This paragraph arrived in a commit
+  touching **only this file**; that the suite ran at all is the evidence, and it is the
+  reason the paragraph exists.
+
   Not covered, and deliberately: the client's own constants
   (`croft/android/app/.../caps/Xrpc.kt`) are in another repo, so this test cannot read
   them. A collection renamed there without the contract changing would still drift
