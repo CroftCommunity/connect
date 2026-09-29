@@ -142,8 +142,10 @@ croftcall://call?endpoint=<id>&relay=<url>&handle=<h>&did=<did>&device=<rkey>&gr
 
 - Scheme `croftcall`, host `call`. `endpoint` is **required**; all others
   optional.
-- Produced by the page **after a successful redeem** (§6); consumed by
-  `android/.../DeepLink.kt#parse`.
+- Produced by the page **after a successful redeem** (§6); consumed by the
+  Croft Call app's `DeepLink.kt#parse` (`CroftCommunity/croft`,
+  `android/app/src/main/java/ing/croft/call/DeepLink.kt` — not the retired
+  `connect/android`).
 - `grant` (and, for tickets, a possession proof carried out-of-query — see §7)
   travel to the app so the call can be re-validated at call time. Unknown extra
   query params are ignored by the consumer.
@@ -169,7 +171,7 @@ The redeem flow is **pure read**. It writes nothing.
 7. Build the `croftcall://` deep link (§5), carrying `grant` (and, for tickets,
    the possession proof).
 
-## 7. Call-time check (callee side — interface only, wired in Phase 11)
+## 7. Call-time check (callee side — interface only; the relay's mirror landed in Phase 11)
 
 Redemption authorizes *building a link*; it cannot enforce use-based rules,
 because a static page cannot observe or record "a call happened." The durable
@@ -192,7 +194,8 @@ section fixes only the interface so both halves agree on the shape.
 this interface names — `evaluateMatcher(matcher, ctx)` (§2: ticket / mutuals /
 registeredCallers, fails closed), `evaluateRules(rules, ctx)` (the composable
 revocation rules, fails closed on unknown types), and `evaluateGrant(grant, ctx)`
-(grant-exists AND matcher AND rules). The relay mirrors this logic in Phase 11;
+(grant-exists AND matcher AND rules). The relay mirrors this logic (croft-stack
+`croft-relay-admit/src/caps.rs`, evaluated at mint — Phase 11);
 the static redeem page (§6) runs only the `expires` subset of `evaluateRules`.
 `ctx.usesSoFar` (prior successful calls) and `ctx.grantExists` are call-time facts
 the page cannot supply.
