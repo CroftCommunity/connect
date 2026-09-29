@@ -1,0 +1,31 @@
+{
+  "lexicon": 1,
+  "id": "ing.croft.call.grant",
+  "description": "Who may call: a public record that resolves to yes/no for a caller at call time. Transcribed from connect docs/contract.md §2 (contract v2), which is canonical. Record key: the grant id (opaque, referenced by the invite link). World-readable — a grant must not name the grantee (contract §8). Matchers combine by OR across grants; manual revoke is deleting the record.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": ["matcher"],
+        "properties": {
+          "matcher": { "type": "ref", "ref": "#matcher", "description": "how a caller qualifies (tagged union, below)" },
+          "devices": { "type": "array", "items": { "type": "string" }, "description": "endpoint rkeys this grant authorizes; omit = all" },
+          "policyRef": { "type": "string", "description": "rkey into `ing.croft.call.policy` (§3)" },
+          "createdAt": { "type": "string", "description": "ISO-8601 timestamp" }
+        }
+      }
+    },
+    "matcher": {
+      "type": "object",
+      "description": "An open tagged union keyed on `type` (contract §2). New matcher types append with no reshape, so `type` lists known values rather than a closed set. Which fields each variant requires is stated in the contract, not expressible here.",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "knownValues": ["ticket", "mutuals", "registeredCallers"], "description": "ticket — qualify by POSSESSION; mutuals — qualify by IDENTITY, a preset that names no one; registeredCallers — qualify by IDENTITY, an explicit list" },
+        "secretHash": { "type": "string", "description": "ticket: sha256(secret) as lowercase hex; the secret itself lives only in the invite link's fragment, never in any record" },
+        "dids": { "type": "array", "items": { "type": "string" }, "description": "registeredCallers: the callers' DIDs, stored plaintext in v2" }
+      }
+    }
+  }
+}
