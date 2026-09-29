@@ -1,0 +1,30 @@
+{
+  "lexicon": 1,
+  "id": "ing.croft.call.policy",
+  "description": "Under what limits: composable revocation rules one or more grants reference by policyRef. Transcribed from connect docs/contract.md §3 (contract v2), which is canonical. Record key: the policy id, referenced by grant.policyRef. One policy governs many grants. Every rule must hold for a grant to still admit.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": ["rules"],
+        "properties": {
+          "rules": { "type": "array", "items": { "type": "ref", "ref": "#rule" }, "description": "composable revocation rules (tagged)" },
+          "label": { "type": "string", "description": "human name for the policy" },
+          "createdAt": { "type": "string", "description": "ISO-8601 timestamp" }
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "description": "A tagged rule keyed on `type` (contract §3). New rule types append with no reshape, so `type` lists known values rather than a closed set. Which fields each variant requires is stated in the contract, not expressible here.",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "knownValues": ["expires", "maxUses", "burnOnSuccess"], "description": "expires — enforceable at redeem AND call time; maxUses — call-time only; burnOnSuccess — one-use, call-time only" },
+        "at": { "type": "string", "description": "expires: an ISO-8601 instant" },
+        "n": { "type": "integer", "description": "maxUses: the number of successful calls allowed" }
+      }
+    }
+  }
+}
