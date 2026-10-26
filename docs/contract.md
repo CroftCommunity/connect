@@ -195,7 +195,7 @@ this interface names — `evaluateMatcher(matcher, ctx)` (§2: ticket / mutuals 
 registeredCallers, fails closed), `evaluateRules(rules, ctx)` (the composable
 revocation rules, fails closed on unknown types), and `evaluateGrant(grant, ctx)`
 (grant-exists AND matcher AND rules). The relay mirrors this logic (croft-stack
-`croft-relay-admit/src/caps.rs`, evaluated at mint — Phase 11);
+`relay/source/crates/croft-relay-admit/src/caps.rs`, evaluated at mint — Phase 11);
 the static redeem page (§6) runs only the `expires` subset of `evaluateRules`.
 `ctx.usesSoFar` (prior successful calls) and `ctx.grantExists` are call-time facts
 the page cannot supply.
@@ -203,7 +203,7 @@ the page cannot supply.
 **Divergence CLOSED (found 2026-08-20, ported back 2026-08-24):**
 `evaluateRules` (and the redeem-time check) now **fail closed** on an
 `expires.at` that does not parse, matching the relay mirror (croft-stack
-`croft-relay-admit/src/caps.rs`) — an unevaluable rule cannot be honoured.
+`relay/source/crates/croft-relay-admit/src/caps.rs`) — an unevaluable rule cannot be honoured.
 The boundary is also pinned both sides: the rule holds AT the expiry
 instant (`now <= at`) and denies one tick past it.
 
