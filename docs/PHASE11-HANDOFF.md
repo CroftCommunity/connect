@@ -15,7 +15,8 @@ landed. **Build against v2, not the single-record shape.** This resolves the
 connect-side artifact that grew out of it is
 `web/oauth-client-metadata.json` (the OAuth `client_id` document; croft
 owns its contents). Item 3 — call-time `evaluateGrant` + relay
-enforcement — is the remaining milestone (croft M4, with croft-stack).
+enforcement — shipped: croft M4 released in v0.5.0 (2026-08-27), and the
+production relay has enforced admission since 2026-08-30.
 
 ## What connect provides (the callee-side surface — done)
 
@@ -67,7 +68,8 @@ me, and do its rules still hold," i.e. `evaluateGrant`, not a three-value lookup
    hosted here (`web/oauth-client-metadata.json`, croft-owned contents);
    the redirect scheme is `ing.croft.connect:/oauth` per the spec's
    reverse-domain rule.
-3. **Call-time evaluation as an effect.** 🟨 nearly done (croft M4;
+3. **Call-time evaluation as an effect.** ✅ shipped in croft v0.5.0; production
+   relay enforcing since 2026-08-30 (croft M4;
    plan `croft/plans/2026-08-20-1-plan-m4-call-time-admission.md`).
    The relay side is BUILT (croft-stack Phase 8: `/grantCall` mints a
    sponsorship+scope relay token against fresh grant reads — §7 evaluated

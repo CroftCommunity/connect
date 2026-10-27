@@ -26,6 +26,7 @@ last released as **v0.2.0** — kept for history, not developed further. See
 | `web/oauth-client-metadata.json` | atproto OAuth client metadata for the croft client (`client_id` URL); contents owned by `croft` (its M3 plan) |
 | `android/`              | **retired** stopgap receiver (last release v0.2.0); the app is `croft/android` |
 | `docs/contract.md`      | the shared deep-link + record contract (source of truth)   |
+| `lexicons/`             | the three calling record types as lexicon JSON (unpublished; E161) |
 | `docs/adr/`             | architecture decision records                              |
 | `.github/workflows/`    | `web.yml` (test + Pages deploy), `android.yml` (test + APK) |
 
@@ -55,7 +56,7 @@ workflow artifact (attached to a GitHub Release on a `v*` tag).
 - Web: unit-tested, deploys to `connect.croft.ing` (custom domain, DNS verified).
 - Android: **retired** at v0.2.0. The Croft Call app is now `croft/android`
   (`CroftCommunity/croft`); the two-device call test runs there against
-  the released croft/android app (v0.4.0 at time of writing). connect/android history in
+  the released croft/android app (`CroftC/.claude/DEPLOYED.md` names the current version). connect/android history in
   [ADR-0002](docs/adr/0002-callpeer-api-verification.md).
 - Deferred (needs the human's keystore): Android App Links on
   `https://connect.croft.ing` — see [ADR-0003](docs/adr/0003-custom-domain-connect-croft-ing.md).
