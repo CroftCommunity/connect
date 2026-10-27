@@ -1,0 +1,21 @@
+{
+  "lexicon": 1,
+  "id": "ing.croft.iroh.endpoint",
+  "description": "A device's calling endpoint, in the subscriber's own repo. Transcribed from connect docs/contract.md §1 (contract v2), which is canonical. Record key: one per device — `self` is the primary device (v1 compatible); additional devices use any stable slug (e.g. `phone`, `laptop`). A record with no endpointId is malformed (not \"not listed\").",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": ["endpointId"],
+        "properties": {
+          "endpointId": { "type": "string", "description": "the iroh EndpointId to dial" },
+          "homeRelay": { "type": "string", "description": "relay URL hint; discovery-only if absent" },
+          "label": { "type": "string", "description": "human name for the device" },
+          "createdAt": { "type": "string", "description": "ISO-8601 timestamp" }
+        }
+      }
+    }
+  }
+}
