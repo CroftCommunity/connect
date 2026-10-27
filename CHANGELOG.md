@@ -16,6 +16,11 @@ the two tags; earlier detail is in `git log` and `docs/RELEASING.md`.
 
 ## [Unreleased]
 
+- **contract:** the three calling record types (`ing.croft.call.grant`,
+  `ing.croft.call.policy`, `ing.croft.iroh.endpoint`) as lexicon JSON in `lexicons/`,
+  transcribed from `docs/contract.md` under a test; unpublished — seven open questions
+  are E161 (#10).
+
 - **contract:** an unevaluable expiry is expired, not eternal — `evaluateRules` treats a
   malformed `expiresAt` as already past (E126 port-back from the relay's resolver, which
   had diverged the same way).
@@ -23,8 +28,8 @@ the two tags; earlier detail is in `git log` and `docs/RELEASING.md`.
   `transition:generic` — the mint's identity proof (croft M4 O2) needs it.
 - **web:** the atproto OAuth client metadata file for Croft Call is published from this
   repo (croft Phase 11 M3); the README names the file and its owner.
-- **android:** retired — `connect/android` is removed and `croft/android` is the one app
-  (contract v2). Docs aligned to the one-app merge; `docs/PHASE11-HANDOFF.md` carries the
+- **android:** retired — `connect/android` stays in the tree for history at v0.2.0 with no
+  further development; `croft/android` is the one app (contract v2). Docs aligned to the one-app merge; `docs/PHASE11-HANDOFF.md` carries the
   connect → croft vocabulary bridge.
 
 ## [0.2.0] — 2026-08-16
